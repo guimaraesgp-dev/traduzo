@@ -19,5 +19,5 @@ class LanguageModel(AbstractModel):
     # Req. 3
     @classmethod
     def list_dicts(cls):
-        languages = cls.find()
-        return [language.to_dict() for language in languages]
+        data = cls.find()
+        return [data.to_dict() for data in data]
