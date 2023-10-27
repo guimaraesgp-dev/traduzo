@@ -1,39 +1,49 @@
+import json
 from src.models.history_model import HistoryModel
 from src.models.user_model import UserModel
-import json
+
+
+def create_sample_history_entry():
+    entry = HistoryModel(
+        {
+            "text_to_translate": "Hello, I like videogame",
+            "translate_from": "en",
+            "translate_to": "pt",
+        }
+    )
+    entry.save()
+    return entry
 
 
 def test_history_delete(app_test):
-    # Criar um histórico de tradução
-    history_entry = {
-        "text_to_translate": "Do you love music?",
-        "translate_from": "en",
-        "translate_to": "pt",
-    }
-    history = HistoryModel(history_entry)
-    history.save()
+    # Cria uma entrada no histórico
+    create_sample_history_entry()
 
-    # Obter o histórico de tradução antes da exclusão
-    original_history_data_json = HistoryModel.list_as_json()
-    original_history_data = json.loads(original_history_data_json)
+    # Obtém os dados do histórico antes da exclusão
+    history_data_json = HistoryModel.list_as_json()
+    history_data = json.loads(history_data_json)
 
-    # Criar um usuário
-    user = UserModel({"name": "um nome", "token": "um token"})
-    user.save()
+    UserModel({"name": "um_nome", "token": "um_token"}).save()
 
-    # Excluir a entrada do histórico criada
+    history_count = len(history_data)
+    # Exclui a entrada do histórico
     response = app_test.delete(
-        f"/admin/history/{history._id}",
+        f"/admin/history/{history_data[0]['_id']}",
         headers={
-            "Authorization": "um token",
-            "User": "um nome",
+            "Authorization": "um_token",
+            "User": "um_nome",
         },
     )
 
-    # Obter o histórico de tradução após a exclusão
+    # Obtém os dados atualizados do histórico
     new_history_data_json = HistoryModel.list_as_json()
     new_history_data = json.loads(new_history_data_json)
 
-    # Verificar os resultados
-    assert response.status_code == 204
-    assert len(new_history_data) == len(original_history_data) - 1
+    new_history_count = len(new_history_data)
+
+    assert (
+        history_count - new_history_count == 1
+    ), "A exclusão não removeu com sucesso o registro do histórico."
+    assert (
+        response.status_code == 204
+    ), "A exclusão não retornou o código de status esperado."
